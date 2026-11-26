@@ -3,6 +3,7 @@ from datetime import datetime
 
 from dotenv import load_dotenv
 from trello import TrelloClient
+from agente import selecionar_nome
 
 
 # ============================================================
@@ -53,29 +54,21 @@ def encontrar_quadro(client, nome_quadro):
     """
     Procura um quadro pelo nome.
     """
-    for board in client.list_boards():
-        if nome_quadro.lower() in board.name.lower():
-            return board
-
-    return None
+    return selecionar_nome(client.list_boards(), nome_quadro)
 
 
 def encontrar_lista(board, nome_lista):
     """
     Procura uma lista dentro do quadro pelo nome.
     """
-    for lista in board.list_lists():
-        if nome_lista.lower() in lista.name.lower():
-            return lista
-
-    return None
+    return selecionar_nome(board.list_lists(), nome_lista)
 
 
 # ============================================================
 # AUTOMAÇÃO
 # ============================================================
 
-def criar_card_diario(lista):
+def criar_card_diario(lista, listas):
     """
     Cria o card automático referente ao dia atual.
     """
@@ -83,6 +76,12 @@ def criar_card_diario(lista):
     horario = datetime.now().strftime("%H:%M:%S")
 
     nome_card = f"{NOME_CARD} - {hoje}"
+
+    for lst in listas:
+        for card in lst.list_cards():
+            if card.name == nome_card:
+                print(f"ℹ️ Tarefa diária já existente: {card.name}")
+                return card
 
     card = lista.add_card(
         name=nome_card,
@@ -100,30 +99,10 @@ def mover_cards_automaticos(
     card_atual
 ):
     """
-    Move cards automáticos anteriores para a lista de destino.
-
-    A regra atual é demonstrativa:
-    qualquer card com o texto definido em NOME_CARD,
-    diferente do card criado na execução atual, é movido.
+    Preserva cards até confirmação manual de conclusão.
     """
-    cards_movidos = 0
-
-    for card in lista_origem.list_cards():
-
-        if (
-            NOME_CARD.lower() in card.name.lower()
-            and card.id != card_atual.id
-        ):
-            card.change_list(lista_destino.id)
-
-            print(
-                f"✅ Card movido para "
-                f"'{lista_destino.name}': {card.name}"
-            )
-
-            cards_movidos += 1
-
-    return cards_movidos
+    # Idade ou nome não comprovam conclusão de uma tarefa.
+    return 0
 
 
 # ============================================================
@@ -222,7 +201,7 @@ def main():
 
     try:
         card_atual = criar_card_diario(
-            lista_origem
+            lista_origem, quadro.list_lists()
         )
     except Exception as error:
         print(
@@ -254,8 +233,8 @@ def main():
     print("🎉 AUTOMAÇÃO CONCLUÍDA")
     print("=" * 55)
 
-    print(f"Card criado: {card_atual.name}")
-    print(f"Cards movidos: {cards_movidos}")
+    print(f"Card diário disponível: {card_atual.name}")
+    print(f"Cards movidos: {cards_movidos} (conclusão manual)")
 
 
 if __name__ == "__main__":
