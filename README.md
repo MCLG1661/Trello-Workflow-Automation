@@ -241,6 +241,8 @@ AGENTE TRELLO — AUTOMAÇÃO
 
 ## 🚀 Exemplo de Automação
 
+A automação diária evita criar novamente uma tarefa com o mesmo título nas listas consultadas do quadro, em execuções sequenciais. A conclusão deve ser confirmada manualmente pelo menu de movimentação; idade e nome não comprovam conclusão. Os exemplos abaixo são conceituais.
+
 Um fluxo automatizado pode:
 
 1. Identificar um quadro
@@ -312,7 +314,7 @@ Utilize o **Agendador de Tarefas** para executar o script Python no horário des
 Exemplo :
 
 ```text
-C:\Python39\python.exe C:\projetos\agente_automatico.py
+C:\Python39\python.exe C:\projetos\automacao_total.py
 ```
 
 ### Linux / macOS
@@ -322,7 +324,7 @@ Utilize `cron`.
 Exemplo para execução diária às 9h:
 
 ```bash
-0 9 * * * /usr/bin/python3 /home/usuario/agente_automatico.py
+0 9 * * * /usr/bin/python3 /home/usuario/automacao_total.py
 ```
 
 ---
