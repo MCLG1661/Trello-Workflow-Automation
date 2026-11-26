@@ -29,6 +29,21 @@ def listar_meus_quadros(client):
         print(f"  {i+1}. {board.name} (ID: {board.id})")
     return boards
 
+def selecionar_nome(items, nome):
+    if not nome.strip():
+        return None
+    matches = [item for item in items if nome.casefold() in item.name.casefold()]
+    exact = [item for item in matches if item.name.casefold() == nome.casefold()]
+    candidates = exact or matches
+    return candidates[0] if len(candidates) == 1 else None
+
+
+def indice_valido(items, idx):
+    if not 0 <= idx < len(items):
+        raise ValueError("Opção inválida")
+    return items[idx]
+
+
 def selecionar_quadro(boards):
     """Permite selecionar um quadro pelo nome ou índice"""
     if not boards:
@@ -44,12 +59,12 @@ def selecionar_quadro(boards):
             return boards[idx]
     
     # Tenta selecionar por nome (parcial)
-    for board in boards:
-        if nome.lower() in board.name.lower():
-            return board
-    
-    print(f"❌ Quadro '{nome}' não encontrado.")
-    return None
+    if nome.isdigit():
+        return None
+    board = selecionar_nome(boards, nome)
+    if board is None:
+        print("❌ Quadro não encontrado ou seleção ambígua.")
+    return board
 
 def listar_listas_do_quadro(board):
     """Lista todas as listas de um quadro"""
@@ -103,7 +118,7 @@ def automatizar_tarefas_diarias(client):
     """
     Função principal de automação:
     - Cria cards diários em uma lista específica
-    - Move cards antigos para "Done" após 24h
+    - Não move tarefas sem confirmação explícita de conclusão
     """
     print("\n" + "="*50)
     print("🤖 INICIANDO AUTOMAÇÃO DIÁRIA")
@@ -116,11 +131,7 @@ def automatizar_tarefas_diarias(client):
         print(f"  {i+1}. {board.name}")
     
     board_name = input("\n📁 Nome do quadro para automação: ").strip()
-    board = None
-    for b in boards:
-        if board_name.lower() in b.name.lower():
-            board = b
-            break
+    board = selecionar_nome(boards, board_name)
     
     if not board:
         print(f"❌ Quadro '{board_name}' não encontrado!")
@@ -136,11 +147,7 @@ def automatizar_tarefas_diarias(client):
     
     # 3. Selecionar lista para criar cards
     todo_list_name = input("\n📝 Nome da lista para criar cards (ex: 'To Do'): ").strip()
-    todo_list = None
-    for lst in lists:
-        if todo_list_name.lower() in lst.name.lower():
-            todo_list = lst
-            break
+    todo_list = selecionar_nome(lists, todo_list_name)
     
     if not todo_list:
         print(f"❌ Lista '{todo_list_name}' não encontrada!")
@@ -148,39 +155,29 @@ def automatizar_tarefas_diarias(client):
     
     # 4. Selecionar lista para mover cards finalizados
     done_list_name = input("✅ Nome da lista para mover cards concluídos (ex: 'Done'): ").strip()
-    done_list = None
-    for lst in lists:
-        if done_list_name.lower() in lst.name.lower():
-            done_list = lst
-            break
+    done_list = selecionar_nome(lists, done_list_name)
     
     if not done_list:
         print(f"❌ Lista '{done_list_name}' não encontrada!")
         return
     
-    # 5. Criar card do dia
+    if todo_list.id == done_list.id:
+        print("❌ Origem e destino devem ser diferentes.")
+        return
     today = datetime.now().strftime("%Y-%m-%d")
     task_name = f"Tarefa do dia - {today}"
-    task_desc = "Tarefa criada automaticamente pelo agente Python"
-    
-    print(f"\n📝 Criando card: {task_name}")
-    novo_card = criar_card(todo_list, task_name, task_desc)
-    
-    # 6. Exemplo: Mover cards antigos da lista "To Do" para "Done"
-    print(f"\n🔄 Verificando cards antigos em '{todo_list.name}'...")
-    cards = todo_list.list_cards()
-    cards_movidos = 0
-    
-    for card in cards:
-        # Se o card foi criado antes de ontem, move para Done
-        # (Simulação - em produção você usaria a data real do card)
-        if card.name != task_name and cards_movidos < 2:  # Move até 2 cards de exemplo
-            mover_card(card, done_list)
-            cards_movidos += 1
-    
-    print(f"\n✅ Automação concluída!")
-    print(f"   - Card criado: {task_name}")
-    print(f"   - Cards movidos: {cards_movidos}")
+    existing = [card for lst in lists for card in lst.list_cards()
+                if card.name == task_name]
+    if existing:
+        print(f"ℹ️ Tarefa diária já existente: {task_name}")
+        return
+    novo_card = criar_card(todo_list, task_name, "Tarefa criada automaticamente pelo agente Python")
+    if novo_card is None:
+        print("❌ Automação interrompida: criação falhou.")
+        return
+    print(f"✅ Card criado: {novo_card.name}")
+    print("Cards movidos: 0 (conclusão deve ser confirmada manualmente).")
+
 
 def menu_principal():
     """Menu interativo do agente"""
@@ -221,7 +218,7 @@ def menu_principal():
                         print(f"  {i+1}. {lst.name}")
                     try:
                         idx = int(input("Número da lista: ")) - 1
-                        lista = lists[idx]
+                        lista = indice_valido(lists, idx)
                         nome_card = input("Nome do card: ")
                         desc_card = input("Descrição (opcional): ")
                         criar_card(lista, nome_card, desc_card)
@@ -239,18 +236,18 @@ def menu_principal():
                         print(f"  {i+1}. {lst.name}")
                     try:
                         idx_origem = int(input("Número da lista origem: ")) - 1
-                        lista_origem = lists[idx_origem]
+                        lista_origem = indice_valido(lists, idx_origem)
                         cards = listar_cards_da_lista(lista_origem)
                         
                         if cards:
                             idx_card = int(input("Número do card: ")) - 1
-                            card = cards[idx_card]
+                            card = indice_valido(cards, idx_card)
                             
                             print("\nSelecione a lista DESTINO:")
                             for i, lst in enumerate(lists):
                                 print(f"  {i+1}. {lst.name}")
                             idx_destino = int(input("Número da lista destino: ")) - 1
-                            lista_destino = lists[idx_destino]
+                            lista_destino = indice_valido(lists, idx_destino)
                             
                             mover_card(card, lista_destino)
                     except (ValueError, IndexError):
@@ -267,12 +264,12 @@ def menu_principal():
                         print(f"  {i+1}. {lst.name}")
                     try:
                         idx_lista = int(input("Número da lista: ")) - 1
-                        lista = lists[idx_lista]
+                        lista = indice_valido(lists, idx_lista)
                         cards = listar_cards_da_lista(lista)
                         
                         if cards:
                             idx_card = int(input("Número do card: ")) - 1
-                            card = cards[idx_card]
+                            card = indice_valido(cards, idx_card)
                             comentario = input("Comentário: ")
                             adicionar_comentario(card, comentario)
                     except (ValueError, IndexError):
@@ -289,7 +286,7 @@ def menu_principal():
                         print(f"  {i+1}. {lst.name}")
                     try:
                         idx = int(input("Número da lista: ")) - 1
-                        listar_cards_da_lista(lists[idx])
+                        listar_cards_da_lista(indice_valido(lists, idx))
                     except ValueError:
                         print("❌ Opção inválida!")
         
