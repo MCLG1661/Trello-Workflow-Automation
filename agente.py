@@ -153,17 +153,6 @@ def automatizar_tarefas_diarias(client):
         print(f"❌ Lista '{todo_list_name}' não encontrada!")
         return
     
-    # 4. Selecionar lista para mover cards finalizados
-    done_list_name = input("✅ Nome da lista para mover cards concluídos (ex: 'Done'): ").strip()
-    done_list = selecionar_nome(lists, done_list_name)
-    
-    if not done_list:
-        print(f"❌ Lista '{done_list_name}' não encontrada!")
-        return
-    
-    if todo_list.id == done_list.id:
-        print("❌ Origem e destino devem ser diferentes.")
-        return
     today = datetime.now().strftime("%Y-%m-%d")
     task_name = f"Tarefa do dia - {today}"
     existing = [card for lst in lists for card in lst.list_cards()

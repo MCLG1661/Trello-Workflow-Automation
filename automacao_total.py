@@ -17,7 +17,6 @@ TRELLO_TOKEN = os.getenv("TRELLO_TOKEN")
 
 QUADRO_NOME = "Meu Projeto"
 LISTA_ORIGEM = "To Do"
-LISTA_DESTINO = "Done"
 NOME_CARD = "Tarefa Automática"
 
 
@@ -57,17 +56,6 @@ def encontrar_quadro(client, nome_quadro):
     return selecionar_nome(client.list_boards(), nome_quadro)
 
 
-def encontrar_lista(board, nome_lista):
-    """
-    Procura uma lista dentro do quadro pelo nome.
-    """
-    return selecionar_nome(board.list_lists(), nome_lista)
-
-
-# ============================================================
-# AUTOMAÇÃO
-# ============================================================
-
 def criar_card_diario(lista, listas):
     """
     Cria o card automático referente ao dia atual.
@@ -91,18 +79,6 @@ def criar_card_diario(lista, listas):
     print(f"✅ Card criado: {card.name}")
 
     return card
-
-
-def mover_cards_automaticos(
-    lista_origem,
-    lista_destino,
-    card_atual
-):
-    """
-    Preserva cards até confirmação manual de conclusão.
-    """
-    # Idade ou nome não comprovam conclusão de uma tarefa.
-    return 0
 
 
 # ============================================================
@@ -161,15 +137,13 @@ def main():
     # 4. LISTAS
     # --------------------------------------------------------
 
-    lista_origem = encontrar_lista(
-        quadro,
-        LISTA_ORIGEM
-    )
+    try:
+        listas = quadro.list_lists()
+    except Exception as error:
+        print(f"❌ Erro ao consultar listas: {error}")
+        return
 
-    lista_destino = encontrar_lista(
-        quadro,
-        LISTA_DESTINO
-    )
+    lista_origem = selecionar_nome(listas, LISTA_ORIGEM)
 
     if not lista_origem:
         print(
@@ -178,21 +152,9 @@ def main():
         )
         return
 
-    if not lista_destino:
-        print(
-            f"❌ Lista de destino "
-            f"'{LISTA_DESTINO}' não encontrada."
-        )
-        return
-
     print(
         f"✅ Lista origem: "
         f"{lista_origem.name}"
-    )
-
-    print(
-        f"✅ Lista destino: "
-        f"{lista_destino.name}"
     )
 
     # --------------------------------------------------------
@@ -201,7 +163,7 @@ def main():
 
     try:
         card_atual = criar_card_diario(
-            lista_origem, quadro.list_lists()
+            lista_origem, listas
         )
     except Exception as error:
         print(
@@ -210,23 +172,7 @@ def main():
         return
 
     # --------------------------------------------------------
-    # 6. MOVER CARDS
-    # --------------------------------------------------------
-
-    try:
-        cards_movidos = mover_cards_automaticos(
-            lista_origem,
-            lista_destino,
-            card_atual
-        )
-    except Exception as error:
-        print(
-            f"❌ Erro ao mover cards: {error}"
-        )
-        return
-
-    # --------------------------------------------------------
-    # 7. RESUMO
+    # 6. RESUMO
     # --------------------------------------------------------
 
     print("\n" + "=" * 55)
@@ -234,7 +180,7 @@ def main():
     print("=" * 55)
 
     print(f"Card diário disponível: {card_atual.name}")
-    print(f"Cards movidos: {cards_movidos} (conclusão manual)")
+    print("Cards movidos: 0 (conclusão manual)")
 
 
 if __name__ == "__main__":

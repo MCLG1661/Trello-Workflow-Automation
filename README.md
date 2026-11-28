@@ -241,7 +241,7 @@ AGENTE TRELLO — AUTOMAÇÃO
 
 ## 🚀 Exemplo de Automação
 
-A automação diária evita criar novamente uma tarefa com o mesmo título nas listas consultadas do quadro, em execuções sequenciais. A conclusão deve ser confirmada manualmente pelo menu de movimentação; idade e nome não comprovam conclusão. Os exemplos abaixo são conceituais.
+A automação diária evita criar novamente uma tarefa com o mesmo título nas listas consultadas do quadro, em execuções sequenciais. A criação diária exige apenas a lista de origem. A conclusão deve ser confirmada manualmente pelo menu de movimentação; idade e nome não comprovam conclusão. Os exemplos abaixo são conceituais.
 
 Um fluxo automatizado pode:
 
