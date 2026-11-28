@@ -20,6 +20,10 @@ de tarefas.
 O projeto demonstra a aplicação prática de **Python, integração com APIs,
 automação de processos e gerenciamento seguro de credenciais**.
 
+## English overview
+
+A Python command-line project for managing Trello boards, lists, and cards through the Trello API. It demonstrates card creation, movement, comments, and recurring task creation with duplicate checks for sequential runs.
+
 ---
 
 ## 🎯 Objetivo
